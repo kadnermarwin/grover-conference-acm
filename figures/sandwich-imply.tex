@@ -1,0 +1,140 @@
+\usetikzlibrary{angles}
+\usetikzlibrary{positioning}
+\definecolor{drawColor}{RGB}{128 128 128}
+\newcommand{\circleSize}{0.25em}
+\newcommand{\angleSize}{0.8em}
+
+\forestset{
+	/tikz/mandatory/.style={
+		circle,fill=drawColor,
+		draw=drawColor,
+		inner sep=\circleSize
+	},
+	/tikz/optional/.style={
+		circle,
+		fill=white,
+		draw=drawColor,
+		inner sep=\circleSize
+	},
+	featureDiagram/.style={
+		for tree={
+			minimum height = 0.6cm,
+			text depth = 0,
+			draw = drawColor,
+			edge = {draw=drawColor},
+			parent anchor = south,
+			child anchor = north,
+			l sep = 2em,
+			s sep = 1em,
+		}
+	},
+	/tikz/redColor/.style={
+		fill = red!60,
+		draw = drawColor
+	},
+	/tikz/orangeColor/.style={
+		fill = orange!50,
+		draw = drawColor
+	},
+	/tikz/yellowColor/.style={
+		fill = yellow!50,
+		draw = drawColor
+	},
+	/tikz/darkGreenColor/.style={
+		fill = black!30!green,
+		draw = drawColor
+	},
+	/tikz/lightGreenColor/.style={
+		fill = green!30,
+		draw = drawColor
+	},
+	/tikz/cyanColor/.style={
+		fill = cyan!30,
+		draw = drawColor
+	},
+	/tikz/lightGrayColor/.style={
+		fill = black!10,
+		draw = drawColor
+	},
+	/tikz/blueColor/.style={
+		fill = blue!50,
+		draw = drawColor
+	},
+	/tikz/magentaColor/.style={
+		fill = magenta,
+		draw = drawColor
+	},
+	/tikz/pinkColor/.style={
+		fill = pink!90,
+		draw = drawColor
+	},
+	/tikz/abstract/.style={
+		fill = blue!85!cyan!5,
+		draw = drawColor
+	},
+	/tikz/concrete/.style={
+		fill = blue!85!cyan!20,
+		draw = drawColor
+	},
+	mandatory/.style={
+		edge label={node [mandatory] {} }
+	},
+	optional/.style={
+		edge label={node [optional] {} }
+	},
+	or/.style={
+		tikz+={
+			\path (.parent) coordinate (A) -- (!u.children) coordinate (B) -- (!ul.parent) coordinate (C) pic[fill=drawColor, angle radius=\angleSize]{angle};
+		}	
+	},
+	/tikz/or/.style={
+	},
+	alternative/.style={
+		tikz+={
+			\path (.parent) coordinate (A) -- (!u.children) coordinate (B) -- (!ul.parent) coordinate (C) pic[draw=drawColor, angle radius=\angleSize]{angle};
+		}	
+	},
+	/tikz/alternative/.style={
+	},
+	/tikz/placeholder/.style={
+	},
+	collapsed/.style={
+		rounded corners,
+		no edge,
+		for tree={
+			fill opacity=0,
+			draw opacity=0,
+			l = 0em,
+		}
+	},
+	/tikz/hiddenNodes/.style={
+		midway,
+		rounded corners,
+		draw=drawColor,
+		fill=white,
+		minimum size = 1.2em,
+		minimum width = 0.8em,
+		scale=0.9
+	},
+}
+
+\begin{forest}
+	featureDiagram
+	[Sandwich,concrete[Bread,concrete,mandatory[Full Grain ,concrete,alternative][Toast,concrete][Flatbread,concrete]][Cheese,concrete,optional[Gouda,concrete,optional][Cheddar,concrete,optional]][Meat,concrete,optional[Salami ,concrete,optional][Ham,concrete,optional]]]	
+	\matrix [anchor=north west] at (current bounding box.north east) {
+		\node [placeholder] {}; \\
+	};
+	\matrix [draw=drawColor,anchor=north west] at (current bounding box.north east) {
+		\node [label=center:\underline{Legend:}] {}; \\
+		\node [concrete,label=right:Feature] {}; \\
+		\node [mandatory,label=right:Mandatory] {}; \\
+		\node [optional,label=right:Optional] {}; \\
+			\draw[drawColor] (0.1,0) -- +(-0.2, -0.4);
+			\draw[drawColor] (0.1,0) -- +(0.2,-0.4);
+			\draw[drawColor] (0,-0.2) arc (240:300:0.2);
+		\node [alternative,label=right:Alternative Group] {}; \\	};
+	\matrix [below=1mm of current bounding box] {
+	\node {\( \text{Full Grain } \Rightarrow \text{Gouda} \land \text{Salami } \)}; \\
+	\node {\( \text{Toast} \Rightarrow \text{Gouda} \land \text{Salami } \)}; \\
+	};
+\end{forest}

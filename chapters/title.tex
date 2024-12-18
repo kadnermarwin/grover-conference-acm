@@ -1,0 +1,35 @@
+
+
+%%
+%% The "title" command has an optional parameter,
+%% allowing the author to define a "short title" to be used in page headers.
+\title{Enhancing and Optimizing Grover's Algorithm for Unified Random Sampling of Software Product Lines}
+
+%%
+%% The abstract is a short summary of the work to be presented in the
+%% article.
+\begin{abstract}
+This paper improves upon the previous implementations of Grover's algorithm for uniform random sampling in the context of software product lines.
+By addressing inefficiencies in quantum circuit design for software product lines (SPLs) we manage to reduce the quantum circuit depth and width significantly.
+Additionally we propose novel approaches to designing a Grover oracle for software product lines.
+Specifically, we focus on two main tasks: Removing redundant quantum operations that increase computational overhead and introducing lookup tables to optimize qubit usage. 
+These improvements were evaluated using SPL models by the BURST benchmarking suite and SPL tool FeatureIDE, measuring both the circuit depth and width.
+The results demonstrate that our optimizations lead to substantial reductions in circuit size, particularly for larger feature models, making Grover's algorithm more scalable and efficient for practical applications in SPL testing and management.
+\end{abstract}
+
+%%
+%% Keywords. The author(s) should pick words that accurately describe
+%% the work being presented. Separate the keywords with commas. 
+\keywords{Quantum Computing, Grover's Algorithm, Software Product Lines}
+%% A "teaser" image appears between the author and affiliation
+%% information and the body of the document, and typically spans the
+%% page.
+
+\received{11 November 2024}
+\received[revised]{dd-mm-yyyy}
+\received[accepted]{dd-mm-yyyy}
+
+%%
+%% This command processes the author and affiliation and title
+%% information and builds the first part of the formatted document.
+\maketitle

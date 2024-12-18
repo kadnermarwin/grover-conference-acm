@@ -1,0 +1,23 @@
+\section{Related Work}
+In the following section we will take a look into current literature on this topic.
+This is important as it positions our thesis within the larger quantum computing landscape and shows how it differs from other work on the topic.
+
+
+
+\textit{Hangleiter and Eisert} explore various random sampling techniques in quantum circuits and their computational advantages in their paper \cite{Hangleiter_2023}. 
+They define quantum random sampling as the process of obtaining samples from random quantum computations. 
+However, this paper takes a different approach. 
+Instead of focusing on random quantum computations, it addresses the challenge of generating uniform random samples from a distribution under specific constraints, a task that cannot be accomplished solely through random quantum computation.
+
+In the context of Grover's algorithm, recent advancements have explored ways to enhance its efficiency. \textit{Xiang Li et al. (2023)} proposed in \cite{li2023resource} several optimization techniques, including the W-cycle Oracle, Oracle compression, and Randomized Grover's Algorithm to reduce circuit complexity and increase computational efficiency.
+\begin{description}
+    \item[W-cycle Oracle]
+    It allows the creation of at most $2^m$ boolean equations using only m ancilla qubits, at the cost of a deeper circuit.
+    \item[Oracle Compression]
+    Oracle Compression is the same type of optimization as we are proposing in this paper by removing redundant gates.
+    \item[Randomized Grover's Algorithm]
+    The idea for this method, is that in each iteration the amplitudes for valid solutions will always get amplified and the solutions to the specific subset of problems will get amplified but will get reduced again in other iterations.
+    However, they concluded that convergence is not always guaranteed.
+\end{description}
+These approaches focus on improving the implementation of the Grover oracle by reducing the number of ancilla qubits, eliminating redundant gates, and applying a randomized oracle to amplify solutions in different iterations, albeit without guaranteed convergence. 
+While these optimizations fall beyond the scope of this paper, which centers on reducing the depth and width of a giving implementation, they represent promising complementary strategies for further improving Grover's algorithm.

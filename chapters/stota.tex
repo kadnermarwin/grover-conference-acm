@@ -1,0 +1,135 @@
+\begin{table}
+    \centering
+    \begin{tabular}{c|l|p{2.5cm}}
+         Rule & Feature model primitive & propositional term\\
+         \hline
+         \hline
+         1&$r$ is root feature & $r$\\
+         \hline
+         2&$f_1$ is \textit{mandatory} sub(-feature) of $f$ & $f_1 \Longleftrightarrow f$\\
+         \hline
+         3&$f_1$ is \textit{optional} sub of $f$ & $f_1 \Longrightarrow f$\\
+         \hline
+         4&$f_1,\dots,f_n$ \texttt{OR}-subs of $f$ & $f_1 \lor \dots \lor f_n \Longleftrightarrow f$\\
+         \hline
+         5&$f_1,\dots,f_n$ \texttt{XOR}-subs of $f$ & $f_1 \lor \dots \lor f_n \Longleftrightarrow f \newline \land \bigwedge\limits_{i<j}\lnot(f_i\land f_j)$\\
+         \hline
+         6&$f_1$ requires $f_2$ & $f_1 \Longrightarrow f_2$\\
+         \hline
+         7&$f_1$ excludes $f$ & $\lnot (f_1 \land f_2)$\\
+    \end{tabular}
+    \caption{Feature model primitives and their corresponding, propositional conjunction term.}
+    \label{tab:bg:thesis:feature-table}
+\end{table}
+\section{State of the Art}
+This subsection will provide the necessary background knowledge of our previous work \cite{thesis-marwin-kadner}, which this paper extends.
+In reference to the cited thesis, we introduced a method for translating feature models that does not necessarily adhere to the CNF (Conjunctive Normal Form) format. Table \ref{tab:bg:thesis:feature-table} shows this translation.
+Instead, it employs a propositional representation that encompasses a broader range of logical operators, not only including the classical \texttt{NOT}, \texttt{AND}, and \texttt{OR} gates but also proposing a quantum-equivalent interpretation for the gates \texttt{Implication}, \texttt{Equivalence} and \texttt{XOR}.
+
+\begin{description}
+    \item[Implication] The new implementation of an \texttt{Implication} gate is equal to an optimized version of the NNF version.
+    A quantum circuit of this can be seen in Figure \ref{fig:bg:thesis:implication}. 
+
+    \begin{figure}[H]
+        \centering
+        \subfigure[$\lnot f_1 \lor f$]{
+        \begin{tikzpicture}
+            \node[scale=0.7]{
+                \begin{quantikz}
+                    f_1~ & \gate{X} & \octrl{2} & \gate{X} & \\
+                    f~ & & \octrl{0} & &\\
+                    t~ & & \gate{X} & \gate{X} & \\ 
+                \end{quantikz}
+            };
+        \end{tikzpicture}
+        }
+        \subfigure[$\lnot (f_1\land\lnot f)$]{
+            \begin{tikzpicture}
+                \node[scale=0.7]{
+                    \begin{quantikz}
+                        f_1 ~ & \ctrl{2} &  & \\
+                        f ~ & \octrl{0} &  & \\
+                        t ~ & \gate{X} & \gate{X} & \\
+                    \end{quantikz}
+                };
+            \end{tikzpicture}
+        }
+        \caption[Implication implementation]{
+            Comparison of two alternative implementations of implication using quantum gates.}
+        \label{fig:bg:thesis:implication}
+    \end{figure} 
+
+    \item[Equivalence]
+    If we take a look at Table \ref{tab:bg:thesis:feature-table}, we can see that our \texttt{Equivalence} gate is either used to act on two input qubits, or a conjunction of input qubits and a single qubit.
+
+    Our gate circuit for both of these cases can be seen in Figure \ref{fig:bg:thesis:equivalence-circuit}. 
+    
+    \begin{figure}[H]
+        \centering
+        \subfigure[$a \Leftrightarrow b$]{
+            \begin{tikzpicture}
+                \node[scale=0.7]{
+                    \begin{quantikz}
+                        a~ &\ctrl{2}&&& \\
+                        b~ &&\ctrl{1}&& \\
+                        t~ &\gate{X}&\gate{X}&\gate{X}& \\
+                    \end{quantikz}
+                };
+            \end{tikzpicture}
+        }
+        \subfigure[$\bigvee\limits_{i=1\dots n}a_i \Leftrightarrow b$]{
+            \begin{tikzpicture}
+                \node[scale=0.7]{
+                    \begin{quantikz}
+                        a_1~ &\octrl{4}&&\\
+                        \vdots \\
+                        a_n~ &\octrl{2}&&\\
+                        b~ &&\ctrl{1}& \\
+                        t~ &\gate{X}&\gate{X}& \\
+                    \end{quantikz}
+                };
+            \end{tikzpicture}
+        }
+        \caption[Equivalence Gate Circuit]{Example circuits for both rules that include an \texttt{Equivalence}.}.
+        \label{fig:bg:thesis:equivalence-circuit}
+    \end{figure}
+
+    \item[XOR]
+    While normally a $n$-ary \texttt{XOR} turns on for an uneven amount of toggled input bits, in the context of this paper a $n$-ary \texttt{XOR} refers to an operation that flips it’s target when only a single input qubit is 1. 
+    This is due to semantics of alternative groups in feature models.
+    XOR operations on only 2 operands (qubits) are basically the negated version of our Equivalence gate, checking exclusive disjunction for n. 
+    Rule 5 in Table \ref{tab:bg:thesis:feature-table}, however, shows that we have to operate with multiple ($n$) input qubits.
+    The new implementation of \texttt{XOR} is introduced as 
+    \textbf{Disjunction of possibilities}: 
+    
+    This is designed by building one term for each possibility, so n in total. For the $i$-th term we check if only the $i$-th qubit is active while the others are inactive.
+    Finally we build an OR with all our term ancillas as controls. 
+    As a formula this would look like:
+
+    \begin{align}
+        \bigvee_{i=0}^n \bigl( f_i \land \bigwedge_{\substack{j\neq i \\ j=0}}^{n}\lnot f_j\bigr) &= \left( f_0 \land \lnot f_1 \land \dots \lnot \land f_n \right) \nonumber\\
+        & \left( \lor\lnot f_0 \land f_1 \land \lnot f_2 \land \dots \land \lnot f_n \right) \nonumber\\
+        &\vdots\nonumber\\
+        &\left( \lor\lnot f_0 \land \dots \land \lnot f_{n-1} \land f_n \right)
+    \end{align}
+
+    While this works, utilizing the fact that always only one of these terms can be achieved, helps us to drastically reduce the width. Figure \ref{fig:bg:thesis:xor-disjunction-circuit} shows this optimized circuit.
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}
+            \node[scale=0.7]{
+                \begin{quantikz}
+                    f_1~& \ctrl{3} & \octrl{3} & \octrl{3} & \\
+                    f_2~& \octrl{0} & \ctrl{0} & \octrl{0} & \\
+                    f_3~& \octrl{0} & \octrl{0} & \ctrl{0} & \\
+                    t~  & \gate{X} & \gate{X} & \gate{X} & \\
+                \end{quantikz}
+            };
+        \end{tikzpicture}
+        \caption{Optimized circuit for possibility disjunction for $n=3$.}
+        \label{fig:bg:thesis:xor-disjunction-circuit}
+    \end{figure}
+    
+    
+\end{description}

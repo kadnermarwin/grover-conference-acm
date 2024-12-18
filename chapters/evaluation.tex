@@ -1,0 +1,45 @@
+\begin{table*}
+    \centering
+    \begin{tabular}{c|c||c|c||c|c}
+        Feature Model & \# of features & Previous Depth & New Depth & Previous Width & New Width\\
+        \hline \hline
+        Car & 10 & 32 & 32 & 21 & 21 \\
+        Sandwich & 11 & 32 & 30 & 35 & 35\\
+        Bike & 54 & 58 & 58 & 92 & 92\\
+        axTLS & 96 & 304 & 304 & 296 & 271\\
+        cLib & 313 & 902 & 856 & 1103 & 909\\
+        BusyBox & 854 & 2998 & 2794 & 2558 & 2390 \\
+        Toolkit & 1179 & 27956 & 4736 & 22449 & 2558
+    \end{tabular}
+    \caption{Width and Depth of our test models and their respective size in amount of features (\# of features). The depth was calculated by transpiling the circuit onto the statevector backend. We compare the old implementation presented in \cite{thesis-marwin-kadner} and the new implementation introduced in this paper.}
+    \label{tab:eval:depth-width}
+\end{table*}
+
+\section{Evaluation}
+In this chapter, we evaluate our implementation and compare it to the previous implementation by \textit{Kadner et al.} in \cite{thesis-marwin-kadner}.
+We evaluate based on two critical quantum circuit metrics: Depth and Width.
+These metrics, which are crucial for understanding the efficiency and scalability of quantum circuits, are discussed in detail in Section 2.2 of our Background.
+Finally, we compare the results with our previous work \cite{thesis-marwin-kadner} and assess on possible improvements or deteriorations.
+
+\subsection{Methodology}
+The methodolgy follows the approach outlined by \textit{Ammermann et al.} in \cite{ammermann2023quantumcomputingimproveuniform} and \textit{Kadner et al.} in \cite{thesis-marwin-kadner}.
+For proper benchmarking and comparison we use the same feature models as in the previous work.
+These are feature models by the BURST benchmarking suite \cite{burst-suite} and examples by the software product line tool FeatureIDE \cite{feature_ide}.
+We begin by creating a QASM output for both the previous implementation and our proposed implementation.
+Afterwards we parse this output into a Qiskit object using the \textit{parse()} method provided by Qiskit in their Python module \texttt{qiskit\_qasm3\_import}.
+Finally working on a Qiskit object allows us to utilize the \textit{depth()} and \textit{width()} methods it provides.
+The evaluation will focus on comparing the performance of our implementation against previous work, highlighting improvements in both circuit depth and width.
+
+
+\subsection{Depth}
+To evaluate the depth of our new implementation, we performed a comparison between the computed depth of our approach and the one presented in the reference work \cite{thesis-marwin-kadner, ammermann2023quantumcomputingimproveuniform}. 
+The results, as shown in Table \ref{tab:eval:depth-width}, indicate a significant improvement in depth, especially in the case of larger feature models. 
+These larger models tend to introduce more complex constraints and, as a result, often contain more duplicated qubits in the previous implementation. 
+The increased number of duplicated qubits provides an opportunity for our new method to apply more efficient optimization techniques, leading to a more substantial reduction in circuit depth.
+In contrast, smaller feature models with fewer constraints and duplicated qubits do not offer the same level of optimization potential, resulting in relatively smaller improvements. 
+This demonstrates that the benefits of our implementation become more pronounced as the complexity of the feature models increases, highlighting its effectiveness for scaling to more complex quantum circuits.
+
+
+
+\subsection{Width}
+We observe similar improvements in the width of our new implementation as in the circuit depth. As discussed in Section \ref{sec:impl:lookup-tables}, our approach significantly reduces the need to duplicate qubits, resulting in significant width savings. By minimizing qubit duplication, our method optimizes resource utilization, especially in more complex circuits. Table \ref{tab:eval:depth-width} illustrates that these gains are most evident in larger feature models, which are more prone to duplicated logical terms. In such models, the elimination of redundant qubits has a greater impact, resulting in a significant reduction in circuit width. Conversely, smaller feature models, which typically have fewer duplications, show less dramatic improvements. Nevertheless, the results show that our implementation is particularly beneficial for feature models of high complexity, where it effectively reduces both the number of qubits and the circuit overhead.

@@ -1,0 +1,97 @@
+\section{Implementation}
+This implementation section outlines the practical steps and theoretical enhancements made to improve upon the work of \textit{Kadner et al.} \cite{thesis-marwin-kadner}.
+It details optimizations at the quantum circuit and gate level, focusing on reducing circuit depth and width for better efficiency. 
+We also provide insights into how these improvements were translated into code, bridging the gap between theory and practical application. 
+By explaining both the conceptual and technical aspects, this section highlights the key strategies used to enhance the performance of Grover’s algorithm in the context of software product lines.
+% \subsection{Refactoring}
+% In the course of refactoring the existing implementation proposed by \textit{Kadner et al.} and \textit{Ammermann et al}.\cite{ammermann2023quantumcomputingimproveuniform, thesis-marwin-kadner}, several established principles were applied to improve the codebase’s structure, readability, and maintainability. 
+% The Single Responsibility Principle was adopted to ensure that each function and class is designed with a specific, well-defined responsibility, thereby enhancing modularity and easing the debugging process. 
+% To address code duplication, the DRY (Don't Repeat Yourself) principle was implemented by consolidating repetitive logic into reusable functions and classes, thereby reducing redundancy. 
+% Additionally, code readability was enhanced through the use of descriptive variable and function names, consistent indentation, and the inclusion of comments to elucidate complex logic. 
+% Furthermore, refactoring patterns such as method and class extraction were employed to decompose large, monolithic functions and classes into more manageable components. 
+% These refinements not only contributed to a cleaner and more organized codebase but also facilitated improved testing and future modifications.
+\subsection{Redundant Operations}
+
+\newcommand{\bm}[4]{\begin{bmatrix}#1&#2\\#3&#4\end{bmatrix}}
+\newcommand{\Xgate}{\bm{0}{1}{1}{0}}
+\newcommand{\Hgate}{-\frac{1}{\sqrt{2}}\bm{1}{1}{1}{-1}}
+
+In Quantum Computing, some operations are self-inverse, meaning that their operation matrix is involutory. For example, given the Hadamard Gate $H =\Hgate$ we see that multiplying H by itself will result in an identity matrix:
+\begin{align}
+    H^2 &= \Hgate \Hgate \nonumber\\
+    &= \frac{1}{2}\bm{2}{0}{0}{2} = \bm{1}{0}{0}{1}\
+\end{align}
+To further optimize the quantum circuit, we eliminate these self-inverse operations. 
+This is done by creating a two-dimensional array that tracks the operations for each qubit. 
+We then iteratively traverse the array, identifying and removing successive pairs of self-inverting gates. 
+This process is repeated until no more such pairs are found. 
+While this optimization reduces the circuit depth in the generated QASM output, it does not affect the depth when transpiled using Qiskit, since its \textit{transpile()} method inherently removes redundant gates. 
+Nevertheless, this improvement results in a shorter depth in the QASM representation, potentially providing future flexibility by reducing dependencies on specific frameworks or libraries.
+
+\subsection{Lookup Tables}
+\label{sec:impl:lookup-tables}
+It is not uncommon for multiple constraints within one feature model to exhibit similarities in their constituent parts, given that features often interact in ways that are not mutually exclusive.
+For example, certain features may be required or excluded together across different constraints, leading to the emergence of repeated patterns in the Boolean formulae.
+These repeated patterns are also represent in the previous implementation of the quantum circuit.
+As shown in \autoref{tab:bg:thesis:feature-table} all constraints require one or even multiple additional qubits, so called \textit{ancilla qubits}. 
+These qubits store temporary results that are needed for entangling the constraint to the final result state.
+The repeated patterns thus cause some ancilla qubits to store the same state and hence be duplicates.
+
+This is where our optimization comes in. When creating the circuit, we try to build a lookup table for all previously created (ancilla) qubits and what logical formulae they represent. 
+When creating the qubits for constraints we look for qubits that store the same state as is required for our constraint.
+If such qubit is found, we use it instead of creating a new one, saving on both depth and width.
+When looking at our example \textit{Sandwich} feature model shown in Figure \ref{fig:bg:spl:sandwich-imply-model}, we can see that both constraints contain the term "Gouda $\land$ Salami".
+
+Figure \ref{fig:impl:lookup-table-comparison} shows the comparison of the resulting quantum circuits that represent these constraints.
+Subfigure (a) was generated using the previous version of the implementation, whereas (b) was created using a revised version that incorporates lookup tables.
+We can see that the circuit width of our new implementation was reduced by one qubit.
+This was due to the removal of the duplicate qubit "Gouda $\land$ Salami" in the old implementation.
+In the new implementation both final constraints qubits ("Toast $\implies$ (Gouda $\land$ Salami)" and "Full Grain $\implies$ (Gouda $\land$ Salami)") use the same qubit as control instead of creating a new one as it was done in the old implementation. 
+
+\begin{figure}
+    \subfigure[Old Implementation]{
+    \begin{tikzpicture}
+        \node[scale=0.4]{
+            \begin{quantikz}[scale=0.5]
+                \lstick{Full Grain}~ & && \ctrl{6}&&\\
+                \lstick{Toast}~ & &&&\ctrl{6}&\\
+                \lstick{Gouda}~ & \ctrl{2} & \ctrl{3} &&&\\
+                \lstick{Salami}~ & \ctrl{0} & \ctrl{0} &&&\\
+                \lstick{Gouda $\land$ Salami}~ & \gate{X} &&\octrl{0}&&\\
+                \lstick{Gouda $\land$ Salami}~ & & \gate{X}&&\octrl{0}&\\
+                \lstick{Full Grain $\implies$ (Gouda $\land$ Salami)}~ &\gate{X}&&\gate{X}&&\\
+                \lstick{Toast $\implies$ (Gouda $\land$ Salami)}~ &\gate{X}&&&\gate{X}&\\
+            \end{quantikz}
+        };
+    \end{tikzpicture}
+    }
+    \subfigure[New Implementation]{
+    \begin{tikzpicture}
+        \node[scale=0.4]{
+            \begin{quantikz}
+                \lstick{Full Grain}~ && \ctrl{5}&&\\
+                \lstick{Toast}~ &&&\ctrl{5}&\\
+                \lstick{Gouda}~ & \ctrl{2} &&&\\
+                \lstick{Salami}~ & \ctrl{0} &&&\\
+                \lstick{Gouda $\land$ Salami}~ & \gate{X} &\octrl{0}&\octrl{0}&\\
+                \lstick{Full Grain $\implies$ (Gouda $\land$ Salami)}~ &\gate{X}&\gate{X}&&\\
+                \lstick{Toast $\implies$ (Gouda $\land$ Salami)}~ &\gate{X}&&\gate{X}&\\
+            \end{quantikz}
+        };
+    \end{tikzpicture}
+    }
+    \caption{Quantum circuits satisfying the constraints of our example feature model \ref{fig:bg:spl:sandwich-imply-model}.}
+    \label{fig:impl:lookup-table-comparison}
+\end{figure}
+
+% \subsection{Improving Grover's Iteration (Optional)}
+% Due to time limitations, the optional task of improving and optimizing Grover's algorithm could not be completed in this paper. 
+% Instead, we reference the approach proposed by \textit{Xiang Li et al. (2023)}, who  published \cite{li2023resource} in which they discuss possible methods for increasing efficiency of Grover's algorithm.
+% They proposed three different methods, one they call \textit{W-cycle Oracle}.
+% It allows the creation of at most $2^m$ boolean equations using only $m$ ancilla qubits, at the cost of a deeper circuit.
+% Another one is \textit{Oracle compression} that compresses circuits by removing redundant gates that cancel each other out.
+% And the last method for which they apply a different Oracle in each iteration based on a subset of all solutions to reduce the depth, is called \textit{Randomized Grover's Algorithm}.
+% The idea for this method is that in each iteration the amplitudes for valid solutions will always get amplified and the solutions to the specific subset of problems will get amplified but will get reduced again in other iterations.
+% However, they concluded that convergence is not always guaranteed.
+% As our thesis focuses more on the reduction of length of the Boolean formula theirs focuses on the technical implementation of the Grover oracle and can thus be seen as an additional optimization on top of our thesis.
+
